@@ -1,0 +1,20 @@
+<!DOCTYPE html><html lang="id"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Relawan Ambulans · QQ Peduli</title>
+<style>body{font-family:system-ui,sans-serif;max-width:420px;margin:0 auto;padding:20px;background:#f1f7f3;color:#12261b}
+input,button{width:100%;padding:13px;margin:6px 0;border-radius:12px;border:1.5px solid #cfe3d6;font:inherit}
+button{background:#0a8a62;color:#fff;border:0;font-weight:600}button.o{background:#f0861a}pre{background:#fff;padding:10px;border-radius:12px;white-space:pre-wrap}</style></head><body>
+<h2>🚑 Panel Relawan</h2>
+<input id="k" type="password" placeholder="Kunci relawan"><input id="n" placeholder="Nama relawan"><input id="i" placeholder="ID permintaan" inputmode="numeric">
+<button id="go">Mulai bagikan lokasi (GPS)</button>
+<button class="o" data-s="assigned">Status: Ditugaskan</button><button class="o" data-s="enroute">Status: Dalam perjalanan</button>
+<button class="o" data-s="arrived">Status: Tiba</button><button class="o" data-s="done">Status: Selesai</button><button id="stop">Berhenti bagikan lokasi</button>
+<pre id="log">Siap.</pre>
+<script>
+const $=s=>document.querySelector(s);let w=null,last=0;$('#i').value=new URLSearchParams(location.search).get('id')||'';
+const send=async b=>{const r=await fetch('/api/ambulance',{method:'PATCH',headers:{'Content-Type':'application/json','x-volunteer-key':$('#k').value},body:JSON.stringify({id:+$('#i').value,vol_name:$('#n').value,...b})});
+ $('#log').textContent=(r.ok?'Terkirim ':'Gagal ('+r.status+') ')+new Date().toLocaleTimeString()};
+$('#go').onclick=()=>{if(!navigator.geolocation)return $('#log').textContent='GPS tidak didukung';
+ w=navigator.geolocation.watchPosition(p=>{if(Date.now()-last<5000)return;last=Date.now();send({vol_lat:p.coords.latitude,vol_lng:p.coords.longitude})},e=>$('#log').textContent='GPS: '+e.message,{enableHighAccuracy:true})};
+$('#stop').onclick=()=>{if(w!=null)navigator.geolocation.clearWatch(w);$('#log').textContent='Dihentikan'};
+document.querySelectorAll('[data-s]').forEach(b=>b.onclick=()=>send({status:b.dataset.s}));
+</script></body></html>
